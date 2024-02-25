@@ -16,17 +16,13 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '7.0.x'
-
-    - name: Change directory to sln folder
-      run: cd TestYourTest
       
     - name: Install dotnet tools
+      working-directory: TestYourTest
       run: dotnet tool restore
-      
-    - name: Change directory to UnitTests
-      run: cd UnitTests
     
     - name: Run Stryker.NET
+      working-directory: TestYourTest\UnitTests
       run: dotnet stryker --reporter "markdown"
 
     - name: Post Stryker report as comment
