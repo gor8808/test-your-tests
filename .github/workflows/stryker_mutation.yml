@@ -6,6 +6,7 @@ on:
 
 jobs:
   mutation-testing:
+    permissions: write-all
     runs-on: ubuntu-latest
 
     steps:
@@ -16,12 +17,20 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '7.0.x'
-
-    - name: Change directory to UnitTests
-      run: cd TestYourTest\UnitTests
       
+    - name: Install dotnet tools
+      working-directory: TestYourTest
+      run: dotnet tool restore
+    
     - name: Run Stryker.NET
+      working-directory: TestYourTest/UnitTests
       run: dotnet stryker --reporter "markdown"
+
+    - name: Find Markdown files recursively
+      id: find-md-files
+      run: |
+        md_files=$(find ./TestYourTest/UnitTests -name "*.md")
+        echo "::set-output name=md_files::${md_files}"
 
     - name: Post Stryker report as comment
       uses: actions/github-script@v5
@@ -31,12 +40,16 @@ jobs:
           const fs = require('fs');
           const path = require('path');
 
-          const reportPath = path.join(process.env.GITHUB_WORKSPACE, 'StrykerOutput.md');
-          const reportContent = fs.readFileSync(reportPath, 'utf8');
+          const mdFiles = "${{ steps.find-md-files.outputs.md_files }}".split("\n");
 
-          github.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: reportContent
+          let reportContent = "";
+          mdFiles.forEach(file => {
+            reportContent += fs.readFileSync(file, 'utf8') + '\n';
           });
+          
+          github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reportContent
+            })
