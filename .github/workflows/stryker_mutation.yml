@@ -25,6 +25,12 @@ jobs:
       working-directory: TestYourTest/UnitTests
       run: dotnet stryker --reporter "markdown"
 
+    - name: Find Markdown files recursively
+      id: find-md-files
+      run: |
+        md_files=$(find ./TestYourTest/UnitTests -name "*.md")
+        echo "::set-output name=md_files::${md_files}"
+
     - name: Post Stryker report as comment
       uses: actions/github-script@v5
       with:
@@ -33,9 +39,13 @@ jobs:
           const fs = require('fs');
           const path = require('path');
 
-          const reportPath = path.join(process.env.GITHUB_WORKSPACE, 'StrykerOutput.md');
-          const reportContent = fs.readFileSync(reportPath, 'utf8');
+          const mdFiles = "${{ steps.find-md-files.outputs.md_files }}".split("\n");
 
+          let reportContent = "";
+          mdFiles.forEach(file => {
+            reportContent += fs.readFileSync(file, 'utf8') + '\n';
+          });
+          
           github.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
