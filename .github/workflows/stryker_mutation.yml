@@ -1,0 +1,42 @@
+name: Stryker.NET Mutation Testing
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  mutation-testing:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Change directory to unittests
+      run: cd unittests
+      
+    - name: Run Stryker.NET
+      run: dotnet stryker --reporter "markdown"
+
+    - name: Post Stryker report as comment
+      uses: actions/github-script@v5
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+
+          const reportPath = path.join(process.env.GITHUB_WORKSPACE, 'StrykerOutput.md');
+          const reportContent = fs.readFileSync(reportPath, 'utf8');
+
+          github.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: reportContent
+          });
