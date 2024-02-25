@@ -18,8 +18,11 @@ jobs:
         dotnet-version: '7.0.x'
 
     - name: Change directory to UnitTests
-      run: cd TestYourTest/UnitTests
+      run: dotnet tool restore
       
+    - name: Change directory to UnitTests
+      run: cd TestYourTest/UnitTests
+    
     - name: Run Stryker.NET
       run: dotnet stryker --reporter "markdown"
 
