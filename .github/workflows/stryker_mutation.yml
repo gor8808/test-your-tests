@@ -22,7 +22,7 @@ jobs:
       run: dotnet tool restore
     
     - name: Run Stryker.NET
-      working-directory: TestYourTest\UnitTests
+      working-directory: TestYourTest/UnitTests
       run: dotnet stryker --reporter "markdown"
 
     - name: Post Stryker report as comment
